@@ -1,0 +1,90 @@
+version: '3.7'
+name: db-arch
+
+services:
+  mariadb:
+    image: mariadb:11.0.2
+    restart: always
+    container_name: db-arch-mariadb
+    command: --innodb-use-native-aio=${INNODB_USE_NATIVE_AIO:-1} --sql_mode=${SQL_MODE:-"ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"}
+    environment:
+      MYSQL_ROOT_USER: '${MYSQL_ROOT_USER}'
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+      MYSQL_USER: '${MYSQL_USER}'
+      MYSQL_PASSWORD: '${MYSQL_PORT}'
+      MARIADB_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      start_period: 1m
+      start_interval: 10s
+      interval: 1m
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./.docker/local/volumes/MariaDB/data:/var/lib/mysql
+      - ./.docker/local/volumes/MariaDB/dump:/docker-entrypoint-initdb.d
+    ports:
+      - "${MYSQL_PORT}:3306"
+    networks:
+      - db-arch-network
+
+  phpmyadmin:
+    container_name: db-arch-phpmyadmin
+    image: phpmyadmin:5.2.1-apache
+    restart: always
+    ports:
+      - "${PMA_EXPOSE_PORT}:80"
+    environment:
+      - PMA_USER=root
+      - PMA_PASSWORD=root_password
+      - PMA_HOST=mariadb
+      - PMA_PORT=3306
+    networks:
+      - db-arch-network
+    depends_on:
+      - mariadb
+
+  postgres:
+      container_name: db-arch-postgres
+      image: postgres:17.0
+      restart: always
+      ports:
+        - "${POSTGRES_PORT}:5432"
+      volumes:
+        - ./.docker/local/volumes/Postgres/data:/var/lib/postgresql/data
+      environment:
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      healthcheck:
+        test: [ 'CMD', 'pg_isready', '-U', '${POSTGRES_USER:-postgres}', '-d', '${POSTGRES_PASSWORD:-postgres}' ]
+        interval: 3s
+        timeout: 1s
+        start_period: 0s
+        retries: 9
+      networks:
+        - db-arch-network
+
+  # http://localhost:{PGADMIN_EXPOSE_PORT}/login login page
+  pgadmin4:
+    container_name: db-arch-pgadmin4
+    image: dpage/pgadmin4:9.1.0
+    restart: always
+    ports:
+      - "${PGADMIN_EXPOSE_PORT}:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      - PGADMIN_LISTEN_PORT=${POSTGRES_PORT}
+    volumes:
+      - ./.docker/local/volumes/PgAdmin/data:/var/lib/pgadmin
+    networks:
+      - db-arch-network
+    depends_on:
+      - postgres
+
+networks:
+  db-arch-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.0.35.0/24
