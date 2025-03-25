@@ -1,5 +1,6 @@
 .env
+.idea
 .docker/local/volumes/MariaDB/data/*
 .docker/local/volumes/Postgres/data/*
 .docker/local/volumes/PgAdmin/data/*
-.idea
+
