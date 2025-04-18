@@ -432,26 +432,36 @@ ALTER TABLE "warehouse_inventory_rows" SET SCHEMA warehouse;
 ALTER TABLE "warehouse_inventory_row_serials" SET SCHEMA warehouse;
 
 -- 4) Создание табличных пространств
-CREATE TABLESPACE product_tablespace LOCATION '/var/lib/postgresql/data/product';
-CREATE TABLESPACE warehouse_tablespace LOCATION '/var/lib/postgresql/data/warehouse';
+SELECT * from pg_tablespace;
+SHOW data_directory;
+
+drop TABLESPACE product_tablespace;
+
+-- 4.1)Таб пространство для продуктов
+-- Выполнять отдельными запросами тк табличные пространства не создются в транзакции
+-- @todo Создать дополнительные data папки в окружении ( в docker все настроено на локальный volume)
+CREATE TABLESPACE product_tablespace LOCATION '/var/lib/postgresql/table-spaces/products';
+-- 4.1)Таб пространство для склада
+CREATE TABLESPACE warehouse_tablespace LOCATION '/var/lib/postgresql/table-spaces/warehouse';
+
 
 -- 5) Создание ролей
 CREATE ROLE product_role LOGIN PASSWORD 'product_password';
 CREATE ROLE warehouse_role LOGIN PASSWORD 'warehouse_password';
 
 -- 6) Назначение владельцев для таблиц
-ALTER TABLE product.products OWNER TO product_role;
-ALTER TABLE product.product_physical_properties OWNER TO product_role;
-ALTER TABLE product.product_categories OWNER TO product_role;
-ALTER TABLE product.product_units OWNER TO product_role;
-ALTER TABLE product.product_groups OWNER TO product_role;
-ALTER TABLE product.product_brands OWNER TO product_role;
-ALTER TABLE product.product_kit_properties OWNER TO product_role;
-ALTER TABLE product.product_kit_items OWNER TO product_role;
-ALTER TABLE product.product_accessories OWNER TO product_role;
-ALTER TABLE product.product_analogs OWNER TO product_role;
-ALTER TABLE product.product_consumable_properies OWNER TO product_role;
-ALTER TABLE product.product_serials OWNER TO product_role;
+ALTER TABLE products.products OWNER TO product_role;
+ALTER TABLE products.product_physical_properties OWNER TO product_role;
+ALTER TABLE products.product_categories OWNER TO product_role;
+ALTER TABLE products.product_units OWNER TO product_role;
+ALTER TABLE products.product_groups OWNER TO product_role;
+ALTER TABLE products.product_brands OWNER TO product_role;
+ALTER TABLE products.product_kit_properties OWNER TO product_role;
+ALTER TABLE products.product_kit_items OWNER TO product_role;
+ALTER TABLE products.product_accessories OWNER TO product_role;
+ALTER TABLE products.product_analogs OWNER TO product_role;
+ALTER TABLE products.product_consumable_properies OWNER TO product_role;
+ALTER TABLE products.product_serials OWNER TO product_role;
 
 ALTER TABLE warehouse.warehouse_storage_locations OWNER TO warehouse_role;
 ALTER TABLE warehouse.warehouse_current_stock_balances OWNER TO warehouse_role;
@@ -461,10 +471,30 @@ ALTER TABLE warehouse.warehouse_inventories OWNER TO warehouse_role;
 ALTER TABLE warehouse.warehouse_inventory_rows OWNER TO warehouse_role;
 ALTER TABLE warehouse.warehouse_inventory_row_serials OWNER TO warehouse_role;
 
--- 7) Назначение табличных пространств для схем
-ALTER SCHEMA product SET TABLESPACE product_tablespace;
-ALTER SCHEMA warehouse SET TABLESPACE warehouse_tablespace;
+-- 7) Перемещение таблиц в пространства
+-- Перемещение таблиц из схемы products в product_tablespace
+ALTER TABLE products.products SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_physical_properties SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_categories SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_units SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_groups SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_brands SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_kit_properties SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_kit_items SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_accessories SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_analogs SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_consumable_properies SET TABLESPACE product_tablespace;
+ALTER TABLE products.product_serials SET TABLESPACE product_tablespace;
+
+-- Перемещение таблиц из схемы warehouse в warehouse_tablespace
+ALTER TABLE warehouse.warehouse_storage_locations SET TABLESPACE warehouse_tablespace;
+ALTER TABLE warehouse.warehouse_current_stock_balances SET TABLESPACE warehouse_tablespace;
+ALTER TABLE warehouse.warehouse_report_stocks_in_locations SET TABLESPACE warehouse_tablespace;
+ALTER TABLE warehouse.warehouse_stock_movements SET TABLESPACE warehouse_tablespace;
+ALTER TABLE warehouse.warehouse_inventories SET TABLESPACE warehouse_tablespace;
+ALTER TABLE warehouse.warehouse_inventory_rows SET TABLESPACE warehouse_tablespace;
+ALTER TABLE warehouse.warehouse_inventory_row_serials SET TABLESPACE warehouse_tablespace;
 
 -- 8) Назначение прав доступа
-GRANT ALL PRIVILEGES ON SCHEMA product TO product_role;
+GRANT ALL PRIVILEGES ON SCHEMA products TO product_role;
 GRANT ALL PRIVILEGES ON SCHEMA warehouse TO warehouse_role;

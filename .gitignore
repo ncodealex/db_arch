@@ -2,5 +2,6 @@
 .idea
 .docker/local/volumes/MariaDB/data/*
 .docker/local/volumes/Postgres/data/*
+.docker/local/volumes/Postgres/table-spaces/*
 .docker/local/volumes/PgAdmin/data/*
 
