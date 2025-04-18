@@ -52,6 +52,8 @@ services:
         - "${POSTGRES_PORT}:5432"
       volumes:
         - ./.docker/local/volumes/Postgres/data:/var/lib/postgresql/data
+        - ./.docker/local/volumes/Postgres/table-spaces/products:/var/lib/postgresql/table-spaces/products
+        - ./.docker/local/volumes/Postgres/table-spaces/warehouse:/var/lib/postgresql/table-spaces/warehouse
       environment:
         POSTGRES_USER: ${POSTGRES_USER}
         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
